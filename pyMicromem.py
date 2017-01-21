@@ -49,7 +49,7 @@ class MemoryPage(object):
         tempContents = self.loader.ReadPage(self.lowAddress,self.size)
         for i in range(0,self.size):
             if(tempContents[i] != self.contents[i]):
-                print("Compare fail for address="+hex(self.lowAddress+i)+': Device='+
+                print("\nCompare fail for address="+hex(self.lowAddress+i)+': Device='+
                       str(tempContents[i])+ ' File='+str(self.contents[i]))
                       
     def LoadPage(self):
@@ -220,7 +220,7 @@ class AltosFlash:
         return contents
 
     def WritePage(self,outBuf,address):
-        sys.stdout.write('. ')
+        sys.stdout.write('.')
         sys.stdout.flush()
         self.port.flushInput()
         self.port.flushOutput()

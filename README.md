@@ -18,12 +18,26 @@ The main program understands something about the Altus Metrum
 scheme, including the serial number and config check locations.
 You can modify this easily using the same classes
 
+Usage:
+
+  python pyMicroloader filename.elf [--serial n [--force]]
+
+Dependencies:
+	It depends on the 'pyserial' and 'pyelftools' packages
+
+Packages and Classes created (which pyMicroloader.py depends on):
+	pyMicromem.py contains classes as follows:
+		MemoryPage, which represents a page in the microprocessor
+		Device, which represents all of memory in a micro
+		AltosFlash, which represents the flash loader in the
+			loader with minimal changes elsewhere)
+	pySimpleElf
+	        This package contains the class SimpleElf, which is reall
+		a simple wrapper around the pyelftools class ELFFile
+
 TODO:
 -Fix try/except to better deal with cases when files are not found
  or microprocessors are not connected
 
--Do the arguments in a more general way
-
--Add an argument to override the serial number check
-
--Encapsulate the elf part of the main program into a class.
+-Deal with other error conditions like the elf file containing more
+ data than the processor has memory.
