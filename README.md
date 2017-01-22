@@ -22,6 +22,12 @@ similar class could be written to represent, say, an iHex file.
 Usage:
 
   python pyMicroloader filename.elf [--serial n [--force]]
+   --serial n specifies the serial number of the device. It must be
+     specified if the device has not been flashed.  It it is specified
+     and it does not match the flashed device S/N, it will not be
+     accepted unless you use:
+   --force Ignore the serial number currently flashed and use a newly
+     specified one.
 
 Dependencies:
 	It depends on the 'pyserial' and 'pyelftools' packages
@@ -40,10 +46,11 @@ Packages and Classes created (which pyMicroloader.py depends on):
 
 Installation:
 	(Seems to work for both Ubuntu Linux and Windows 7)
-		1) Install Python2.7 if it is not already there from
-		   python.org.  Choose the latest update (there will
-		   likely be no more) and the Windows version you
-		   have.  (This may work on Python 3.  Not tested)
+		1) Install Python2.7 from python.org if it is not already
+                   on your system. Choose the latest update (there will
+		   likely be no more of 2.7). You also have to pay attention
+                   to the OS version that you are using in order to choose
+                   the right Python.  (pyMicroloader may work on Python 3.  Not tested)
 		2) Download and unzip pyserial from github and pip install pyserial
 		3) Download and unzip elftools from github and pip install pyelftools.
 		4) Download and unzip pyMicroloader (no install necessary)
@@ -55,6 +62,7 @@ o Generally fix errors to work more cleanly.  In particular:
     -Fix try/except to better deal with cases when files are not found
     -Deal with cases where the elf file contains more data than the processor
      has memory
+
 o There may be elf sections and segments that I have not dealt with, but which are
   required by some uProcs
 
@@ -63,4 +71,5 @@ o The AltosLoader class currently thinks that the first device it comes across w
   This needs to be a lot more clever.
 
 o The AltosLoader class can take an explicit device name to open for the loader.  This
-  is not used by the pyMicroloader main program.  It should be
+  is not used by the pyMicroloader main program.  It should be.
+
