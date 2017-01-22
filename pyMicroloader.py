@@ -12,17 +12,29 @@ if len(sys.argv)==1:
     elffile='test.elf'
 if(len(sys.argv)>=2):
    elffile=sys.argv[1]
+skip=0
 for i in range(2,len(sys.argv)):
-    if '--serial' in argv[i]:
-        i+=1
-        inputSerialNum=num(argv[i])
+    if i == skip:
+        continue
+    if '--serial' in sys.argv[i]:
+        skip=i+1
+        inputSerialNumber=int(sys.argv[skip])
         specifiedSerialNumber=True
-    elif '--force' in argv[i]:
+    elif '--force' in sys.argv[i]:
         forceSerialNumber = True
     else:
-        print("Usage: (more tom come)")
-
-loader = pyMicromem.AltosFlash(True) # Connect to the MCU
+        print("\nUsage:\n")
+        print("  python pyMicroloader.py filename [--serial n] [--force]")
+        print("     --serial is optional if the device has been flashed before;")
+        print("       otherwise, you must specify it.  If you specified serial")
+        print("       it must match the serial already flashed unless --force")
+        print("       is added.\n")
+        print("    --force overrides the check for serial number matching")
+try:
+    loader = pyMicromem.AltosFlash(debug=True) # Connect to the MCU
+except ValueError as er:
+    print(er)
+    sys.exit(1)
 ihu = pyMicromem.Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)
 
 with open(elffile,'rb') as file:

@@ -24,6 +24,7 @@
 #
 
 import os
+import platform
 import sys
 import traceback
 import serial
@@ -155,20 +156,33 @@ class AltosFlash:
     # Note:  You should be able to make different classes to represent different
     # loaders with the same methods, and get this whole thing to work
     #
-    def __init__(self,debug):
+    def __init__(self,device=None,debug=False):
         #First, for the Altos device on Linux, it will be one of these
-        possibleDevices = ['ttyACM0','ttyACM1','ttyACM2']
         self.IsAltosFlash=False
-        output = bytearray([118])
+        output = bytearray([118]) # This is a bytearray of 1 with the letter 'v'
         self.gotDevice=False
-        for self.dev in possibleDevices:
+        if(device==None):
+            if platform.system() == 'Windows':
+                baseDevice='COM'
+                possibleUnits=['1','2','3','4','5','6','7','8']
+            else:
+                baseDevice='/dev/ttyACM'
+                possibleUnits=['0','1','2','3']
+        else:
+            baseDevice=device
+            possibleUnits=['']
+
+        for unit in possibleUnits:
             try:
                 # Ok, we'll try to open the device names one by one and
                 # only stop if we get something or run out of devices
                 # If the creation fails, gets caught by SerialException below
                 # and we try again
-                self.port=serial.Serial('/dev/'+self.dev,timeout=1)
-                gotDevice=True
+                devName = baseDevice+unit
+                self.port=serial.Serial(devName,timeout=1)
+                self.gotDevice=True
+                if(debug):
+                    print("Device "+devName)
                 self.port.flush()
                 self.port.write(output)
                 while True:
@@ -177,6 +191,7 @@ class AltosFlash:
                     # the memory range.
                     string = self.port.readline()                   
                     if(len(string)==0):
+                        # We have read all there is.  We should have found it.
                         sys.stdout.flush()
                         assert self.IsAltosFlash
                         break
@@ -192,8 +207,8 @@ class AltosFlash:
                 pass
             except:
                 traceback.print_exc()
-        if(not gotDevice):
-            raise ValueError('No ttyACMx port found')
+        if(not self.gotDevice):
+            raise ValueError('No '+baseDevice+' port found')
     def GetDevice(self):
         "Get the OS name of the device that communicates with the loader"
         return self.dev
