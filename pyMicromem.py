@@ -28,6 +28,7 @@ import platform
 import sys
 import traceback
 import serial
+import time
 
 class MemoryPage(object):
     'A representation of a page of memory in the microprocessor'
@@ -185,11 +186,12 @@ class AltosFlash:
                     print("Device "+devName)
                 self.port.flush()
                 self.port.write(output)
+
                 while True:
                     # Ok, we have a device.  Read the prolog info from it
                     # and parse to confirm that it is an AltosFlash and get
                     # the memory range.
-                    string = self.port.readline()                   
+                    string = self.port.readline()               
                     if(len(string)==0):
                         # We have read all there is.  We should have found it.
                         sys.stdout.flush()
@@ -200,6 +202,8 @@ class AltosFlash:
                         self.devLowAddr=int(stringFields[1],16)
                         self.devHighAddr = int(stringFields[2],16)-1
                     if 'product' in stringFields[0] and 'AltosFlash' in stringFields[1]:
+                        self.IsAltosFlash=True
+                    if 'AltosFlash' in stringFields[0]:
                         self.IsAltosFlash=True
                     if(debug):
                         sys.stdout.write(string)
