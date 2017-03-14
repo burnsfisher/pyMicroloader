@@ -8,6 +8,7 @@ import pySimpleElf
 
 forceSerialNumber = False
 specifiedSerialNumber=False
+waitForDevice=False
 if len(sys.argv)==1:
     elffile='test.elf'
 if(len(sys.argv)>=2):
@@ -22,19 +23,32 @@ for i in range(2,len(sys.argv)):
         specifiedSerialNumber=True
     elif '--force' in sys.argv[i]:
         forceSerialNumber = True
+    elif '--wait' in sys.argv[i]:
+        waitForDevice = True
     else:
-        print("\nUsage:\n")
-        print("  python pyMicroloader.py filename [--serial n] [--force]")
+	print("\npyMicroloader V1.1--Usage:\n")
+        print("  python pyMicroloader.py filename [--serial n] [--force]\n")
         print("     --serial is optional if the device has been flashed before;")
         print("       otherwise, you must specify it.  If you specified serial")
         print("       it must match the serial already flashed unless --force")
-        print("       is added.\n")
+        print("       is added.")
         print("    --force overrides the check for serial number matching")
-try:
-    loader = pyMicromem.AltosFlash(debug=True) # Connect to the MCU
-except ValueError as er:
-    print(er)
-    sys.exit(1)
+	print("    --wait keeps retrying until the loader device is available")
+        sys.exit()
+retry = True
+while retry:
+    try:
+        loader = pyMicromem.AltosFlash(debug=True) # Connect to the MCU
+	retry = False
+    except ValueError as er:
+        print(er)
+	retry = waitForDevice
+        if retry:
+	    print("Retrying in 5 sec...")
+            time.sleep(5)
+	else:
+            sys.exit()
+
 ihu = pyMicromem.Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)
 
 with open(elffile,'rb') as file:
