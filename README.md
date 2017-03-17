@@ -28,6 +28,8 @@ Usage:
      accepted unless you use:
    --force Ignore the serial number currently flashed and use a newly
      specified one.
+   --wait  If the boot loader is not available for some reason keep
+     retrying
 
 Dependencies:
 	It depends on the 'pyserial' and 'pyelftools' packages
