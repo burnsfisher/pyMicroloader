@@ -1,4 +1,4 @@
-# /* Copyright (C) 2017 Burns Fisher
+# /* Copyright (C) 2017,2018 Burns Fisher
 #  * 
 #  * This program is free software; you can redistribute it and/or modify
 #  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import platform
 import sys
 import traceback
 import serial
+import serial.tools.list_ports
 import time
 
 class MemoryPage(object):
@@ -165,25 +166,34 @@ class AltosFlash:
         if(device==None):
             if platform.system() == 'Windows':
                 baseDevice='COM'
-                possibleUnits=['1','2','3','4','5','6','7','8']
             else:
                 baseDevice='/dev/ttyACM'
-                possibleUnits=['0','1','2','3']
         else:
             baseDevice=device
             possibleUnits=['']
 
-        for unit in possibleUnits:
+
+        #
+        # It's not 100% clear if this works with Windows, although
+        # it should.  We might use the non-Grep version but in Linux
+        # we might have a zillion devices to iterate through.
+
+        portInfos = serial.tools.list_ports.grep(baseDevice)
+        for pi in portInfos:
+            # This for is interating through the available serial devices
             try:
-                # Ok, we'll try to open the device names one by one and
-                # only stop if we get something or run out of devices
-                # If the creation fails, gets caught by SerialException below
+                # Ok, we'll try to open the device names that we found
+                # only stop if we get something or run out of devices.
+                # If the creation fails, or if it works, but it does not
+                # look like an Altos loader, SerialException is raised
                 # and we try again
-                devName = baseDevice+unit
+
+                devName = pi[0]
+                print(devName)
                 self.port=serial.Serial(devName,timeout=1)
                 self.gotDevice=True
                 if(debug):
-                    print("Device "+devName)
+                    print("Checking device "+devName)
                 self.port.flush()
                 self.port.write(output)
 
@@ -191,11 +201,18 @@ class AltosFlash:
                     # Ok, we have a device.  Read the prolog info from it
                     # and parse to confirm that it is an AltosFlash and get
                     # the memory range.
+                    #
+                    # This while is iterating through the lines that returned
+                    # in response to writing 'v' above.
+
                     string = self.port.readline()               
                     if(len(string)==0):
                         # We have read all there is.  We should have found it.
                         sys.stdout.flush()
-                        assert self.IsAltosFlash
+                        print("No more input")
+                        if(not self.IsAltosFlash):
+                            self.gotDevice=False
+                            raise serial.SerialException
                         break
                     stringFields = string.split()
                     if 'flash-range' in stringFields[0]:
@@ -211,8 +228,10 @@ class AltosFlash:
                 pass
             except:
                 traceback.print_exc()
+            if(self.IsAltosFlash):
+                break;
         if(not self.gotDevice):
-            raise ValueError('No '+baseDevice+' port found')
+            raise ValueError('No loader responding in '+baseDevice+' ports')
     def GetDevice(self):
         "Get the OS name of the device that communicates with the loader"
         return self.dev
@@ -255,7 +274,7 @@ class AltosFlash:
 
     
 if __name__ == '__main__':
-
+ 
     loader = AltosFlash(True)
     print(loader.GetDevice())
     ihu = Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)

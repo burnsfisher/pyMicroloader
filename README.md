@@ -1,11 +1,13 @@
 # pyMicroloader
 A program loader for embedded microprocessors
 
+V1.1, June 3, 2018: Search for serial devices rather than just taking the first one.
+
 The intent of this loader it for use with a cross-development
 environment for embedded microprocessors.  This loader is
 intended to run in the development environment (or similar);
 I developed it on Linux (Ubuntu 14) but also tested it on
-Windows 7.
+Windows 7, at least a while ago.
 
 This program expects a bootloader of some sort to run in
 the microprocessor.  It currently has a class that corresponds
@@ -67,10 +69,6 @@ o Generally fix errors to work more cleanly.  In particular:
 
 o There may be elf sections and segments that I have not dealt with, but which are
   required by some uProcs
-
-o The AltosLoader class currently thinks that the first device it comes across within
-  the specified namespace (ttyACMx for Linux; COMn for Windows) is the right device.
-  This needs to be a lot more clever.
 
 o The AltosLoader class can take an explicit device name to open for the loader.  This
   is not used by the pyMicroloader main program.  It should be.
