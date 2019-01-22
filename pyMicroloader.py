@@ -9,6 +9,8 @@ import pySimpleElf
 forceSerialNumber = False
 specifiedSerialNumber=False
 waitForDevice=False
+altosLoader=True
+uartLoader=False
 if len(sys.argv)==1:
     elffile='test.elf'
 if(len(sys.argv)>=2):
@@ -25,28 +27,45 @@ for i in range(2,len(sys.argv)):
         forceSerialNumber = True
     elif '--wait' in sys.argv[i]:
         waitForDevice = True
+    elif '--uart' in sys.argv[i]:
+        altosLoader=False
+        uartLoader=True
+    elif '--usb' in sys.argv[i]:
+        altosLoader=True
+        uartLoader=False
     else:
-	print("\npyMicroloader V1.1--Usage:\n")
+        print("\npyMicroloader V2--Usage:\n")
         print("  python pyMicroloader.py filename [--serial n] [--force]\n")
         print("     --serial is optional if the device has been flashed before;")
         print("       otherwise, you must specify it.  If you specified serial")
         print("       it must match the serial already flashed unless --force")
         print("       is added.")
         print("    --force overrides the check for serial number matching")
-	print("    --wait keeps retrying until the loader device is available")
+        print("    --wait keeps retrying until the loader device is available")
         sys.exit()
+if altosLoader:
+    import pyAltosFlash as ldr
+    print("Using Altos USB Flash Loader")
+elif uartLoader:
+    import pySerialFlash as ldr
+    print("Using AMSAT Serial Flash Loader")
+else:
+    print("No loader specified")
+    sys.exit()
+    
 retry = True
 while retry:
     try:
-        loader = pyMicromem.AltosFlash(debug=True) # Connect to the MCU
-	retry = False
+        print("Try loader")
+        loader = ldr.FlashLdr(debug=True) # Connect to the MCU
+        retry = False
     except ValueError as er:
         print(er)
-	retry = waitForDevice
+        retry = waitForDevice
         if retry:
-	    print("Retrying in 5 sec...")
+            print("Retrying in 5 sec...")
             time.sleep(5)
-	else:
+        else:
             sys.exit()
 
 ihu = pyMicromem.Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)
