@@ -79,4 +79,6 @@ o There may be elf sections and segments that I have not dealt with, but which a
 
 o The AltosLoader class can take an explicit device name to open for the loader.  This
   is not used by the pyMicroloader main program.  It should be.
+  
+o Upgrade to Python 3
 
