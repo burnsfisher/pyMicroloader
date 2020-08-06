@@ -3,20 +3,21 @@ A program loader for embedded microprocessors
 
 V1.1, June 3, 2018: Search for serial devices rather than just taking the first one.
 V1.2, Jan 22, 2019: Change design of pyMicroMem slightly to allow multiple loader types
+V2.0, Aug 06, 2022: Debug and fix up the serial loader.  It is now slow but working at 57.6Kbaud
 
 The intent of this loader it for use with a cross-development
 environment for embedded microprocessors.  This loader is
 intended to run in the development environment (or similar);
-I developed it on Linux (Ubuntu 14) but also tested it on
-Windows 7, at least a while ago.
+I developed it on Linux (Ubuntu 14 and 18) but also tested it on
+Windows 7, a while ago.
 
 This program expects a bootloader of some sort to run in
 the microprocessor.  It currently has a class that corresponds
 to the AltusMetrum boot loader and a separate class that corresponds
-to the AMSAT Golf-T loader.  A class could be written to use
+to the AMSAT Golf-Tee serial loader.  A class could be written to use
 (for example) the ST-Link dongle or a built-in ROM loader in a
 processor. NOTE: For Windows 7, it needs a driver (well really 
-an INF file) from Altus Metrum to recognize the loader device when
+an INF file) from Altus Metrum to recognize the USB loader device when
 it is plugged into the USB port.
 
 Similarly, there is class to represent an ELF file.  A 
@@ -78,5 +79,6 @@ o There may be elf sections and segments that I have not dealt with, but which a
   required by some uProcs
 
 o The AltosLoader class can take an explicit device name to open for the loader.  This
-  is not used by the pyMicroloader main program.  It should be.
+  is not used by the pyMicroloader main program.  It should be.  In fact, both loaders
+  should be able to take an explicit device name.
 

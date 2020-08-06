@@ -42,6 +42,8 @@ for i in range(2,len(sys.argv)):
         print("       is added.")
         print("    --force overrides the check for serial number matching")
         print("    --wait keeps retrying until the loader device is available")
+	print("    --usb uses the Altos USB flash loader protocol")
+	print("    --usb uses the AMSAT serial flash loader protocol")
         sys.exit()
 if altosLoader:
     import pyAltosFlash as ldr

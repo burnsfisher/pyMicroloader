@@ -96,8 +96,10 @@ class FlashLdr:
                     if 'flash-range' in stringFields[0]:
                         self.devLowAddr=int(stringFields[1],16)
                         self.devHighAddr = int(stringFields[2],16)-1
+
                     if('GolfSerialLoader' in stringFields[1]):
                        self.IsSerialFlash=True
+                       print("Is serial flash")
                     if('Version' in stringFields[0]):
                         #Ok, that's the last line
                         print("Flash loader version " + stringFields[1])
@@ -138,6 +140,7 @@ class FlashLdr:
         return 0x100 # If we could get it from the loader, we should
     
     def ReadPage(self,address,size):
+	#print("Reading page "+hex(address)+" of size "+hex(size))
         sys.stdout.flush()
         #self.port.flushInput()
         self.port.flushOutput()
@@ -156,7 +159,7 @@ class FlashLdr:
             for j in range(0,4):
                 byte = contents[j+(i*4)]
                 calcChecksum = (calcChecksum + (byte<<(j*8))) & 0xffffffff
-                #print(hex(calcChecksum)+" "+hex(byte))
+        #print("CalcCheck:"+hex(calcChecksum)+" Read:"+hex(readChecksum))
         if(calcChecksum == readChecksum):
             sys.stdout.write('-')
         else:
@@ -166,41 +169,54 @@ class FlashLdr:
 
     def WritePage(self,outBuf,address):
         sys.stdout.flush()
-        #self.port.flushInput()
         self.port.flushOutput()
         command = 'W '+ hex(address)[2:]+'\n' #Don't want the 0x in front
         self.__WaitAndSendCommand(command)
-        self.port.write(outBuf)
+        bytes = bytearray(4)
         calcChecksum = 0
         for i in range(0,64):
             for j in range(0,4):
+                #Speed it up a bit by sending 4 bytes at a time
                 byte = outBuf[j+(i*4)]
+                bytes[j] = byte
                 calcChecksum = calcChecksum + (byte<<(j*8))
-        checksumWrite = bytearray(4)
-        #print(hex(calcChecksum))
+            self.__WaitAndSendByte(bytes)
+
         for i in range (0,4):
-            checksumWrite[i] = (calcChecksum>>(i*8))&0xff
-            #print(hex(checksumWrite[i]))
-        self.port.write(checksumWrite)
+            bytes[i] = (calcChecksum>>(i*8))&0xff
+        self.__WaitAndSendByte(bytes)
         self.port.flushOutput()
         sys.stdout.write('.')
         return
     def StartExecution(self):
         #self.port.flushInput()
         self.port.flushOutput()
-        #self.port.write('a')
-        self.__WaitAndSendCommand(command)
+        self.port.write('a')
         return
     def __WaitAndSendCommand(self,command):
         #Waits for a prompt and then sends the command
         retval=' '
-        while(retval != '\n'):
+        while(retval != 'o'):
             retval = self.port.read(size=1) #Wait for \n
             #if(len(retval)>0):
                 #sys.stdout.write('b')
                 #sys.stdout.write(retval[0])
         self.port.flushInput()
         self.port.write(command)
+	#print(command)
+        return
+    def __WaitAndSendByte(self,byte):
+        #Waits for a prompt and then sends the byte (which must
+	#be a bytearray.  This can probably be the same as SendCommand
+	
+        retval=' '
+        while(retval != '.'):
+            retval = self.port.read(size=1) #Wait for \n
+            #if(len(retval)>0):
+                #sys.stdout.write('b')
+                #sys.stdout.write(retval[0])
+        self.port.flushInput()
+        self.port.write(byte)
         return
     
 if __name__ == '__main__':
