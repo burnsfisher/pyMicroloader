@@ -82,3 +82,6 @@ o The AltosLoader class can take an explicit device name to open for the loader.
   is not used by the pyMicroloader main program.  It should be.  In fact, both loaders
   should be able to take an explicit device name.
 
+o Upgrade to Python 3
+
+
