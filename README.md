@@ -2,7 +2,9 @@
 A program loader for embedded microprocessors
 
 V1.1, June 3, 2018: Search for serial devices rather than just taking the first one.
+
 V1.2, Jan 22, 2019: Change design of pyMicroMem slightly to allow multiple loader types
+
 V2.0, Aug 06, 2022: Debug and fix up the serial loader.  It is now slow but working at 57.6Kbaud
 
 The intent of this loader it for use with a cross-development
