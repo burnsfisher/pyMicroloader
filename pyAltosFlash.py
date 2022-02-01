@@ -1,4 +1,4 @@
-# /* Copyright (C) 2017,2018,2019 Burns Fisher
+# /* Copyright (C) 2017,2018,2019,2021 Burns Fisher
 #  * 
 #  * This program is free software; you can redistribute it and/or modify
 #  * it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@ class FlashLdr:
                     # This while is iterating through the lines that returned
                     # in response to writing 'v' above.
 
-                    string = self.port.readline()               
+                    string = self.port.readline().decode()
                     if(len(string)==0):
                         # We have read all there is.  We should have found it.
                         sys.stdout.flush()
@@ -132,7 +132,7 @@ class FlashLdr:
         self.port.flushInput()
         self.port.flushOutput()
         command = 'R '+ hex(address)[2:]+'\n' #Don't want the 0x in front
-        self.port.write(command)
+        self.port.write(command.encode())
         contents = bytearray(size)   
         self.port.readinto(contents)
         return contents
@@ -143,13 +143,13 @@ class FlashLdr:
         self.port.flushInput()
         self.port.flushOutput()
         command = 'W '+ hex(address)[2:]+'\n' #Don't want the 0x in front
-        self.port.write(command)
+        self.port.write(command.encode())
         self.port.write(outBuf)
         return
     def StartExecution(self):
         self.port.flushInput()
         self.port.flushOutput()
-        self.port.write('a')
+        self.port.write('a'.encode())
         return
 
     

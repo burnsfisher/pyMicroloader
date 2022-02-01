@@ -5,7 +5,9 @@ V1.1, June 3, 2018: Search for serial devices rather than just taking the first 
 
 V1.2, Jan 22, 2019: Change design of pyMicroMem slightly to allow multiple loader types
 
-V2.0, Aug 06, 2022: Debug and fix up the serial loader.  It is now slow but working at 57.6Kbaud
+V2.0, Aug 06, 2021: Debug and fix up the serial loader.  It is now slow but working at 57.6Kbaud
+
+V2.1, Feb 01, 2022: Port to Python3
 
 The intent of this loader it for use with a cross-development
 environment for embedded microprocessors.  This loader is
@@ -84,6 +86,5 @@ o The AltosLoader class can take an explicit device name to open for the loader.
   is not used by the pyMicroloader main program.  It should be.  In fact, both loaders
   should be able to take an explicit device name.
 
-o Upgrade to Python 3
 
 
