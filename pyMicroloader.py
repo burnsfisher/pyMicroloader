@@ -11,6 +11,7 @@ specifiedSerialNumber=False
 waitForDevice=False
 altosLoader=True
 uartLoader=False
+tiUartLoader = False
 if len(sys.argv)==1:
     elffile='test.elf'
 if(len(sys.argv)>=2):
@@ -33,8 +34,11 @@ for i in range(2,len(sys.argv)):
     elif '--usb' in sys.argv[i]:
         altosLoader=True
         uartLoader=False
+    elif '--ti-uart' in sys.argv[i]:
+        tiUartLoader = True
+        altosLoader = False
     else:
-        print("\npyMicroloader V2--Usage:\n")
+        print("\npyMicroloader V2.2--Usage:\n")
         print("  python pyMicroloader.py filename [--serial n] [--force]\n")
         print("     --serial is optional if the device has been flashed before;")
         print("       otherwise, you must specify it.  If you specified serial")
@@ -44,6 +48,7 @@ for i in range(2,len(sys.argv)):
         print("    --wait keeps retrying until the loader device is available")
         print("    --usb uses the Altos USB flash loader protocol")
         print("    --usb uses the AMSAT serial flash loader protocol")
+        print("    --ti-uart uses the ymodem flash loader protocol for TI MCUs")
         sys.exit()
 if altosLoader:
     import pyAltosFlash as ldr
@@ -51,10 +56,13 @@ if altosLoader:
 elif uartLoader:
     import pySerialFlash as ldr
     print("Using AMSAT Serial Flash Loader")
+elif tiUartLoader:
+    import pyTISerialFlash as ldr
+    print("Using Texas Instruments serial flash loader (ymodem)")
 else:
     print("No loader specified")
     sys.exit()
-    
+
 retry = True
 while retry:
     try:
@@ -70,6 +78,15 @@ while retry:
         else:
             sys.exit()
 
+# The flow for TI MCUs is different as it uses ymodem protocol
+# for reliable delivery of the code, from a binary file instead
+# the .elf used by other MCUs
+if tiUartLoader:
+    loader.download_application(elffile)
+    loader.StartExecution()
+    sys.exit(0)
+
+
 ihu = pyMicromem.Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)
 
 with open(elffile,'rb') as file:
@@ -77,7 +94,7 @@ with open(elffile,'rb') as file:
     pSerialNumber = datafile.GetSymbol('ao_serial_number')
     pConfigVersion= datafile.GetSymbol('ao_romconfig_version')
     pConfigCheck = datafile.GetSymbol('ao_romconfig_check')
-    if(pSerialNumber != None and pConfigVersion!=None and pConfigCheck != None): 
+    if(pSerialNumber != None and pConfigVersion!=None and pConfigCheck != None):
         deviceSerial = ihu.GetInt32(pSerialNumber)
         deviceConfig = ihu.GetInt16(pConfigVersion)
         deviceConfigChk = ihu.GetInt16(pConfigCheck)
@@ -120,7 +137,7 @@ with open(elffile,'rb') as file:
     print("Done--starting execution")
     time.sleep(1)
     loader.StartExecution()
-    
+
 ##except ELFError as ex:
 ##    sys.stderr.write("ELF error: %s\n" % ex)
 ##    sys.exit(1)
@@ -135,6 +152,6 @@ exit()
 ##print("Done--starting execution")
 ##time.sleep(1)
 ##loader.StartExecution()
-        
+
 
 
