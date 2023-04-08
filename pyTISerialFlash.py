@@ -68,9 +68,9 @@ class FlashLdr:
                         print(
                             f"Flash loader version: {self.flash_loader_version}")
                         break
-                if not self.found_flash_loader:
-                    self.gotDevice = False
-                    raise serial.SerialException
+                    if not self.found_flash_loader:
+                        self.gotDevice = False
+                        raise serial.SerialException
 
             except serial.SerialException as e:
                 print(f"Serial Exception: {e}", file=sys.stderr)
