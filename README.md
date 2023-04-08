@@ -80,6 +80,32 @@ This code depends on the `pyserial`, `pyelftools` and `modem` python packages. S
 4. `pip install install/modem-1.1-py3-none-any.whl`
 5. Clone this repository or download and unzip `pyMicroloader` (no install necessary)
 
+## Installation for developing GUI
+
+To develop the Qt GUI application create a python virtual environment
+that will not interfere with the local python setup on the development
+machine and will not be stored in git.
+
+1.  create the virtual environment, run `python3 -m venv venv`
+2.  activate the virtual environment
+    1. run `source env/bin/activate` on Linux or Mac
+    2. run `env\Scripts\activate.bat` on Windows
+1.  run `pip install pyserial pyelftools install/modem-1.1-py3-none-any.whl`
+2.  run `pip install PyQt5 pyqt5-tools`
+3.  optionally do `pip install pyinstaller` if you want to create a binary executable
+
+To change the GUI itself run `./design.sh`. This will fire up the Qt design
+tool. The file to change is `ui/main_window.ui`. If an update is made to
+the UI it has to be compiled into a python file. That is done with
+running the `./make.sh` script that updates the `main_window_ui.py` file.
+
+Optionally a binary executable can be created from the `Hostloader.py` with
+all its dependencies. That is done by running
+`pyinstaller --onefile Hostloader.py`. This will create a binary for current
+platform as `dist/Hostloader`.
+
+Note that both `venv` and `dist` directories are excluded from `git` as
+it is usually not a good idea to store a boatload of binary files there.
 
 ## TODO
 
