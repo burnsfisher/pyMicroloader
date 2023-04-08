@@ -92,6 +92,7 @@ class FlashLdr:
         """
         self.port.write(self.flash_loader_version_command)
         self.port.flush()
+        self.port.readline()    # Response starts with a new line
         response = self.port.readline()
         if(len(response) == 0):
             return False
