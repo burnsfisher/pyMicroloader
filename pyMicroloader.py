@@ -12,6 +12,7 @@ waitForDevice=False
 altosLoader=True
 uartLoader=False
 tiUartLoader = False
+portName=None
 if len(sys.argv)==1:
     elffile='test.elf'
 if(len(sys.argv)>=2):
@@ -24,6 +25,9 @@ for i in range(2,len(sys.argv)):
         skip=i+1
         inputSerialNumber=int(sys.argv[skip])
         specifiedSerialNumber=True
+    elif '--port' in sys.argv[i]:
+        skip=i+1
+        portName=sys.argv[skip]
     elif '--force' in sys.argv[i]:
         forceSerialNumber = True
     elif '--wait' in sys.argv[i]:
@@ -47,7 +51,7 @@ for i in range(2,len(sys.argv)):
         print("    --force overrides the check for serial number matching")
         print("    --wait keeps retrying until the loader device is available")
         print("    --usb uses the Altos USB flash loader protocol")
-        print("    --usb uses the AMSAT serial flash loader protocol")
+        print("    --uart uses the AMSAT serial flash loader protocol")
         print("    --ti-uart uses the ymodem flash loader protocol for TI MCUs")
         sys.exit()
 if altosLoader:
@@ -67,7 +71,7 @@ retry = True
 while retry:
     try:
         print("Try loader")
-        loader = ldr.FlashLdr(debug=True) # Connect to the MCU
+        loader = ldr.FlashLdr(device=portName,debug=True) # Connect to the MCU
         retry = False
     except ValueError as er:
         print(er)
