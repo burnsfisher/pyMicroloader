@@ -1,5 +1,5 @@
 # /* Copyright (C) 2017,2018,2019 Burns Fisher
-#  * 
+#  *
 #  * This program is free software; you can redistribute it and/or modify
 #  * it under the terms of the GNU General Public License as published by
 #  * the Free Software Foundation; either version 2 of the License, or
@@ -13,7 +13,7 @@
 #  * You should have received a copy of the GNU General Public License along
 #  * with this program; if not, write to the Free Software Foundation, Inc.,
 #  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#  * 
+#  *
 #  */
 
 #
@@ -31,6 +31,7 @@ import traceback
 import serial
 import serial.tools.list_ports
 import time
+import logging
 
 class MemoryPage(object):
     'A representation of a page of memory in the microprocessor'
@@ -53,14 +54,14 @@ class MemoryPage(object):
         tempContents = self.loader.ReadPage(self.lowAddress,self.size)
         for i in range(0,self.size):
             if(tempContents[i] != self.contents[i]):
-                print("\nCompare fail for address="+hex(self.lowAddress+i)+': Device='+
+                logging.error("\nCompare fail for address="+hex(self.lowAddress+i)+': Device='+
                       str(tempContents[i])+ ' File='+str(self.contents[i]))
-                      
+
     def LoadPage(self):
         self.contents = self.loader.ReadPage(self.lowAddress,self.size)
         self.loaded = True
         self.dirty = False
-        
+
     def WritePage(self,force=False):
         if(force or self.dirty):
             self.loader.WritePage(self.contents,self.lowAddress)
@@ -79,14 +80,14 @@ class MemoryPage(object):
         self.contents[offset] = data
         self.dirty=True
         return
-    
+
     def GetByte(self,address):
         if(address<self.lowAddress or address>self.highAddress):
             raise ValueError('Address out of range of object:'+
                              hex(self.lowAddress)+' '+hex(self.highAddress))
         if(not self.loaded):
             self.LoadPage()
-            
+
         offset = address-self.lowAddress
         return self.contents[offset]
 
@@ -103,7 +104,7 @@ class MemoryPage(object):
 
 class Device(object):
     'A representation of the entire microprocessor--mainely the memory'
-    
+
     def __init__(self,low,high,loader):
         self.loader = loader
         self.pageSize = MemoryPage.size
@@ -115,7 +116,7 @@ class Device(object):
                        range(low,high,self.pageSize)]
     def _GetPageIndex(self,address):
         return (int(address/self.pageSize))-self.lowIndex
-    
+
     def GetByte(self,address):
         return self.memory[self._GetPageIndex(address)].GetByte(address)
 
@@ -127,7 +128,7 @@ class Device(object):
     def PutInt16(self,data,address):
         self.PutByte(data&0xff,address)
         self.PutByte((data>>8)&0xff,address+1)
-        
+
     def GetInt16(self,address):
         lowVal=self.GetByte(address)
         highVal=self.GetByte(address+1)
@@ -151,7 +152,7 @@ class Device(object):
         maxIndex = int((self.highAddress - self.lowAddress)/self.pageSize)
         for i in range(0,maxIndex):
             self.memory[i].TestPage()
-        
+
 
 if __name__ == '__main__':
     if(False):
@@ -159,22 +160,22 @@ if __name__ == '__main__':
     else:
         import pySerialFlash as ldr
     loader = ldr.FlashLdr(debug=False)
-    print(loader.GetDevice())
+    logging.info(loader.GetDevice())
     ihu = Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)
     for addr in range(0x8030000,0x8030100):
         data = ihu.GetByte(addr)
-        print(hex(addr)+":"+hex(data))
-    print("Writing now")
+        logging.info(hex(addr)+":"+hex(data))
+    logging.info("Writing now")
     for addr in range(0x8030000,0x8030100):
         ihu.PutByte(addr&0xff,addr)
         #ihu.PutByte(ord('a')+(addr&0xf),addr)
 
     for addr in range(0x8030000,0x8030100):
         data = ihu.GetByte(addr)
-        #print(hex(addr)+":"+hex(data))
+        #logging.info(hex(addr)+":"+hex(data))
 
     #ihu.PutByte(11,0x8001104)
     #data = ihu.GetByte(0x8001104)
-    #print('Modified Serial Number='+str(data))
+    #logging.info('Modified Serial Number='+str(data))
     ihu.MemoryFlush()
     sys.exit()

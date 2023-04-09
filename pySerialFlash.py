@@ -1,5 +1,5 @@
 # /* Copyright (C) 2017,2018,2019 Burns Fisher
-#  * 
+#  *
 #  * This program is free software; you can redistribute it and/or modify
 #  * it under the terms of the GNU General Public License as published by
 #  * the Free Software Foundation; either version 2 of the License, or
@@ -13,7 +13,7 @@
 #  * You should have received a copy of the GNU General Public License along
 #  * with this program; if not, write to the Free Software Foundation, Inc.,
 #  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#  * 
+#  *
 #  */
 
 #
@@ -31,6 +31,7 @@ import traceback
 import serial
 import serial.tools.list_ports
 import time
+import logging
 
 
 class FlashLdr:
@@ -71,7 +72,7 @@ class FlashLdr:
                 # and we try again
 
                 devName = pi[0]
-                print("Trying "+devName)
+                logging.info("Trying "+devName)
                 self.port=serial.Serial(devName,timeout=1,baudrate=57600)
                 self.gotDevice=True
                 self.port.flush()
@@ -89,7 +90,7 @@ class FlashLdr:
                     if((len(string)==0)):
                         # We have read all there is.  We should have found it.
                         break
-                    print(string)
+                    logging.info(string)
                     stringFields = string.split()
                     if(len(stringFields)<2):
                         break
@@ -99,16 +100,16 @@ class FlashLdr:
 
                     if('GolfSerialLoader' in stringFields[1]):
                        self.IsSerialFlash=True
-                       print("Is serial flash")
+                       logging.info("Is serial flash")
                     if('Version' in stringFields[0]):
                         #Ok, that's the last line
-                        print("Flash loader version " + stringFields[1])
+                        logging.info("Flash loader version " + stringFields[1])
                         break
                     if(debug):
                         sys.stdout.write(string)
                 sys.stdout.flush()
                 if(debug):
-                    print("No more input")
+                    logging.info("No more input")
                 if(not self.IsSerialFlash):
                     self.gotDevice=False
                     raise serial.SerialException
@@ -126,29 +127,29 @@ class FlashLdr:
     def GetDevice(self):
         "Get the OS name of the device that communicates with the loader"
         return self.dev
-    
+
     def GetLowAddr(self):
         "Get the low address that the loader has told us its embedded device has"
         return self.devLowAddr
-    
+
     def GetHighAddr(self):
         "Get the high address that the loader has told us its embedded device has"
         return self.devHighAddr
-    
+
     def GetPageSize(self):
         "Get the page size of this device"
         return 0x100 # If we could get it from the loader, we should
-    
+
     def ReadPage(self,address,size):
-	#print("Reading page "+hex(address)+" of size "+hex(size))
+	#logging.info("Reading page "+hex(address)+" of size "+hex(size))
         sys.stdout.flush()
         #self.port.flushInput()
         self.port.flushOutput()
         command = 'R '+ hex(address)[2:]+'\n' #Don't want the 0x in front
-        #print(command)
+        #logging.info(command)
         #self.port.write(command)
         self.__WaitAndSendCommand(command)
-        contents = bytearray(size)   
+        contents = bytearray(size)
         self.port.readinto(contents) #Read one page of bytes
         readChecksum = 0
         for i in range(0,4):
@@ -159,11 +160,11 @@ class FlashLdr:
             for j in range(0,4):
                 byte = contents[j+(i*4)]
                 calcChecksum = (calcChecksum + (byte<<(j*8))) & 0xffffffff
-        #print("CalcCheck:"+hex(calcChecksum)+" Read:"+hex(readChecksum))
+        #logging.info("CalcCheck:"+hex(calcChecksum)+" Read:"+hex(readChecksum))
         if(calcChecksum == readChecksum):
             sys.stdout.write('-')
         else:
-            print(hex(calcChecksum)+" "+hex(readChecksum))
+            logging.info(hex(calcChecksum)+" "+hex(readChecksum))
             sys.stdout.write('X')
         return contents
 
@@ -203,12 +204,12 @@ class FlashLdr:
                 #sys.stdout.write(retval[0])
         self.port.flushInput()
         self.port.write(command)
-	#print(command)
+	#logging.info(command)
         return
     def __WaitAndSendByte(self,byte):
         #Waits for a prompt and then sends the byte (which must
 	#be a bytearray.  This can probably be the same as SendCommand
-	
+
         retval=' '
         while(retval != '.'):
             retval = self.port.read(size=1) #Wait for \n
@@ -218,26 +219,26 @@ class FlashLdr:
         self.port.flushInput()
         self.port.write(byte)
         return
-    
+
 if __name__ == '__main__':
     import pyMicromem as mem
     loader = FlashLdr(device="ttyUSB",debug=False)
-    print(loader.GetDevice())
+    logging.info(loader.GetDevice())
     ihu = mem.Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)
     for addr in range(0x8030000,0x8030100):
         data = ihu.GetByte(addr)
-        print(hex(addr)+":"+hex(data))
-    print("Writing now")
+        logging.info(hex(addr)+":"+hex(data))
+    logging.info("Writing now")
     for addr in range(0x8030000,0x8030100):
         ihu.PutByte(3,addr)
         #ihu.PutByte(ord('a')+(addr&0xf),addr)
 
     for addr in range(0x8030000,0x8030100):
         data = ihu.GetByte(addr)
-        #print(hex(addr)+":"+hex(data))
+        #logging.info(hex(addr)+":"+hex(data))
 
     #ihu.PutByte(11,0x8001104)
     #data = ihu.GetByte(0x8001104)
-    #print('Modified Serial Number='+str(data))
+    #logging.info('Modified Serial Number='+str(data))
     ihu.MemoryFlush()
     sys.exit()

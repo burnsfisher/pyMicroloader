@@ -3,6 +3,7 @@ import sys
 import threading
 import traceback
 import time
+import logging
 
 from elftools import __version__
 from elftools.common.exceptions import ELFError
@@ -69,13 +70,13 @@ class SimpleElf:
             self.startSeg = segNum #Be able to restart
             segment=self.myElffile.get_segment(segNum)
             #for segment in myElffile.iter_segments():
-            #print("Got segment number "+str(segNum))
+            #logging.info("Got segment number "+str(segNum))
             psecPaddr=segment['p_paddr']
             psecVaddr=segment['p_vaddr']
             psecOffset=segment['p_offset']
             psecFilesz=segment['p_filesz']
             psecMemsz=segment['p_memsz']
-            #print('phdr: Paddr='+hex(psecPaddr)+' Vaddr='+hex(psecVaddr))
+            #logging.info('phdr: Paddr='+hex(psecPaddr)+' Vaddr='+hex(psecVaddr))
             #for nsec, section in enumerate(myElffile.iter_sections()):
             for secNum in range(self.startSec,self.myElffile.num_sections()):
                 self.startSec=secNum+1
@@ -83,27 +84,27 @@ class SimpleElf:
                 sOffset = section['sh_offset']
                 sPaddr = psecPaddr + sOffset - psecOffset
                 sSize = section['sh_size']
-                #print("sSize="+hex(sSize)+" psecOffset="+hex(psecOffset)+" sOffset="+hex(sOffset)+
+                #logging.info("sSize="+hex(sSize)+" psecOffset="+hex(psecOffset)+" sOffset="+hex(sOffset)+
                  #     " sum="+hex(psecOffset+psecFilesz))
                 if(sSize!=0 and psecOffset<=sOffset and sOffset<(psecOffset+psecFilesz)):
-                    #print('Returning Section paddr='+hex(sPaddr)+' Size='+hex(sSize))
+                    #logging.info('Returning Section paddr='+hex(sPaddr)+' Size='+hex(sSize))
                     data = section.data()
                     return[data,sPaddr,sSize]
                 #else:
-                    #print("Skiping section "+str(secNum))
-                    
+                    #logging.info("Skiping section "+str(secNum))
+
             self.startSec=0
-            
+
 if __name__ == '__main__':
     with open('test.elf','rb') as file:
         try:
             thisElf = SimpleElf(file)
             serial = thisElf.GetSymbol('ao_serial_number')
-            print("Serial number address is "+hex(serial))
+            logging.info("Serial number address is "+hex(serial))
             dataSection = thisElf.GetCode()
-            print("Code addr="+hex(dataSection[1])+" len="+hex(dataSection[2]))
+            logging.info("Code addr="+hex(dataSection[1])+" len="+hex(dataSection[2]))
             dataSection = thisElf.GetCode()
-            print("Code addr="+hex(dataSection[1])+" len="+hex(dataSection[2]))
+            logging.info("Code addr="+hex(dataSection[1])+" len="+hex(dataSection[2]))
 
         except ELFError as ex:
           sys.stderr.write("ELF error: %s\n" % ex)
