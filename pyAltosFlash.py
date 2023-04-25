@@ -1,5 +1,5 @@
 # /* Copyright (C) 2017,2018,2019,2021 Burns Fisher
-#  * 
+#  *
 #  * This program is free software; you can redistribute it and/or modify
 #  * it under the terms of the GNU General Public License as published by
 #  * the Free Software Foundation; either version 2 of the License, or
@@ -13,7 +13,7 @@
 #  * You should have received a copy of the GNU General Public License along
 #  * with this program; if not, write to the Free Software Foundation, Inc.,
 #  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#  * 
+#  *
 #  */
 
 #
@@ -30,6 +30,7 @@ import traceback
 import serial
 import serial.tools.list_ports
 import time
+import logging
 
 
 class FlashLdr:
@@ -69,11 +70,11 @@ class FlashLdr:
                 # and we try again
 
                 devName = pi[0]
-                print(devName)
+                logging.info(devName)
                 self.port=serial.Serial(devName,timeout=1)
                 self.gotDevice=True
                 if(debug):
-                    print("Checking device "+devName)
+                    logging.info("Checking device "+devName)
                 self.port.flush()
                 self.port.write(output)
 
@@ -89,7 +90,7 @@ class FlashLdr:
                     if(len(string)==0):
                         # We have read all there is.  We should have found it.
                         sys.stdout.flush()
-                        print("No more input")
+                        logging.info("No more input")
                         if(not self.IsAltosFlash):
                             self.gotDevice=False
                             raise serial.SerialException
@@ -115,25 +116,25 @@ class FlashLdr:
     def GetDevice(self):
         "Get the OS name of the device that communicates with the loader"
         return self.dev
-    
+
     def GetLowAddr(self):
         "Get the low address that the loader has told us its embedded device has"
         return self.devLowAddr
-    
+
     def GetHighAddr(self):
         "Get the high address that the loader has told us its embedded device has"
         return self.devHighAddr
-    
+
     def GetPageSize(self):
         "Get the page size of this device"
         return 0x100 # If we could get it from the loader, we should
-    
+
     def ReadPage(self,address,size):
         self.port.flushInput()
         self.port.flushOutput()
         command = 'R '+ hex(address)[2:]+'\n' #Don't want the 0x in front
         self.port.write(command.encode())
-        contents = bytearray(size)   
+        contents = bytearray(size)
         self.port.readinto(contents)
         return contents
 
@@ -152,16 +153,16 @@ class FlashLdr:
         self.port.write('a'.encode())
         return
 
-    
+
 if __name__ == '__main__':
- 
+
     loader = AltosFlash(device="ttyUSB",debug=True)
-    print(loader.GetDevice())
+    logging.info(loader.GetDevice())
     ihu = Device(loader.GetLowAddr(),loader.GetHighAddr(),loader)
     data = ihu.GetByte(0x8001104)
-    print('IHU Serial number='+str(data))
+    logging.info('IHU Serial number='+str(data))
     ihu.PutByte(7,0x8001104)
     data = ihu.GetInt32(0x8001104)
-    print('Modified Serial Number='+str(data))
+    logging.info('Modified Serial Number='+str(data))
     #ihu.MemoryFlush()
     exit()

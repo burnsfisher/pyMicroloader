@@ -16,7 +16,7 @@ import serial
 import serial.tools.list_ports
 import re
 from pyYmodem import YmodemMCU
-
+import logging
 
 class FlashLdr:
     "Texas Instruments host loader"
@@ -56,8 +56,8 @@ class FlashLdr:
                 # and we try again
 
                 devName = pi.device
-                print(f"Trying {devName}")
-                self.port = serial.Serial(devName, timeout=1, baudrate=115200)
+                logging.info(f"Trying {devName}")
+                self.port = serial.Serial(devName, timeout=1, write_timeout=1, baudrate=115200)
                 self.gotDevice = True
 
                 while True:
@@ -65,7 +65,7 @@ class FlashLdr:
                         self._get_device_information(debug)
                         self.low_address_as_int = int(self.flash_start, 16)
                         self.high_address_as_int = int(self.flash_end, 16) - 1
-                        print(
+                        logging.info(
                             f"Flash loader version: {self.flash_loader_version}")
                         break
                     if not self.found_flash_loader:
@@ -73,7 +73,7 @@ class FlashLdr:
                         raise serial.SerialException
 
             except serial.SerialException as e:
-                print(f"Serial Exception: {e}", file=sys.stderr)
+                logging.error(f"Serial Exception: {e}")
             except:
                 traceback.print_exc()
             if(self.found_flash_loader):
@@ -102,7 +102,7 @@ class FlashLdr:
             m = re.search('([0-9.]+$)', flash_loader_string)
             self.flash_loader_version = m.group(1)
             if debug:
-                print(
+                logging.info(
                     f"Flash loader found!")
             return True
 
@@ -118,7 +118,7 @@ class FlashLdr:
             response = self.port.readline()
             if(len(response) == 0 or self.flash_end):
                 if debug:
-                    print(f"Flash 0x{self.flash_start} - 0x{self.flash_end}")
+                    logging.info(f"Flash 0x{self.flash_start} - 0x{self.flash_end}")
                 return
             dev_info_string = (response.decode("utf-8")).strip()
             if re.match('^FLASH START:', dev_info_string):
@@ -167,7 +167,7 @@ class FlashLdr:
         self.port.flush()
         ymodem = YmodemMCU(self.port)
         ymodem.send(filename)
-        print()
+        logging.info('')
 
 
 def main():

@@ -10,6 +10,7 @@
 
 import sys
 from modem import YMODEM
+import logging
 
 
 class YmodemMCU:
@@ -42,8 +43,8 @@ class YmodemMCU:
 
 
 def show_error(message):
-    print("Command line error:", file=sys.stderr)
-    print(f"\t{message}", file=sys.stderr)
+    logging.info("Command line error:")
+    logging.info(f"\t{message}")
     sys.exit(2)
 
 
@@ -54,7 +55,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "srf:p:", [
                                    "send", "receive", "file=", "port="])
     except getopt.GetoptError as err:
-        print(err)
+        logging.info(err)
         sys.exit(1)
     # Process the command line
     send = False
@@ -87,12 +88,12 @@ def main():
     if send:
         success = ymodem.send(file_name)
         if success:
-            print("Successfully sent!")
+            logging.info("Successfully sent!")
         else:
-            print("Transmission failed!")
+            logging.info("Transmission failed!")
     elif receive:
         files_received = ymodem.receive(".")
-        print(f"Received {files_received} files")
+        logging.info(f"Received {files_received} files")
 
 
 if __name__ == "__main__":
