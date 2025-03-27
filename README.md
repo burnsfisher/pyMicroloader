@@ -8,6 +8,7 @@ A host loader for embedded microprocessors
 * V2.0, Aug 06, 2021: Debug and fix up the serial loader.  It is now slow but working at 57.6K baud
 * V2.1, Feb 01, 2022: Port to Python3
 * V2.2, Sep 10, 2022: Support added for Texas Instruments, TMS570 MCUs over serial
+* V2.3, Mar 27, 2025: Python3 port apparently not fully working.  Serial (uart) loader now working.
 
 ## Concepts
 
