@@ -46,6 +46,7 @@ Similarly, there is class to represent an ELF file. A similar class could be wri
      accepted unless you use:
    --force Ignore the serial number currently flashed and use a newly
      specified one.
+   --port  If you know the device that your STM32 is connected to you can specify it here (does not always work)
    --wait  If the boot loader is not available for some reason keep
      retrying
    --usb  Assume the Altus Metrum usb-based boot loader (default)
@@ -80,6 +81,29 @@ This code depends on the `pyserial`, `pyelftools` and `modem` python packages. S
 4. `pip install install/modem-1.1-py3-none-any.whl`
 5. Clone this repository or download and unzip `pyMicroloader` (no install necessary)
 
+## Using a Python virtual environment
+A virtual environment (venv) allows you to use specific versions of packages which may not be the versions installed on your main machine.  (BF Grump:  All packages should be designed to be upward compatible, but since they are not, this is the hack you can use).
+
+Here is how you do it (on Linux at least):
+
+CD to the directory where your python scripts are.  Then:
+```
+python -m venv ./venv # only needed one time
+source venv/bin/activate  # need to do this for any new shell
+pip install -r requirements.txt # only needed one time
+```
+This should result in something like this:
+```
+
+Processing ./install/modem-1.1-py3-none-any.whl
+Collecting pyelftools==0.27
+Using cached pyelftools-0.27-py2.py3-none-any.whl (151 kB)
+Collecting pyserial==3.5
+  Using cached pyserial-3.5-py2.py3-none-any.whl (90 kB)
+Installing collected packages: pyserial, pyelftools, modem
+Successfully installed modem-1.1 pyelftools-0.27 pyserial-3.5
+```
+You should be in the virtual environment you created.  You can tell because the command line prompt starts with (venv).  You can exit the venv with the simple command "deactivate"
 
 ## TODO
 
