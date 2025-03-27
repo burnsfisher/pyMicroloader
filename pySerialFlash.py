@@ -34,7 +34,7 @@ import time
 
 
 class FlashLdr:
-    "A representation of the AMSAT Golf UART Loader"
+    "A representation of the AMSAT STM32 UART Loader"
     #
     # Note:  You should be able to make different classes to represent different
     # loaders with the same methods, and get this whole thing to work
@@ -72,7 +72,7 @@ class FlashLdr:
 
                 devName = pi[0]
                 print("Trying "+devName)
-                self.port=serial.Serial(devName,timeout=1,baudrate=57600)
+                self.port=serial.Serial(devName,timeout=1.0,baudrate=57600)
                 self.gotDevice=True
                 self.port.flush()
                 self.port.write(output)
@@ -93,22 +93,20 @@ class FlashLdr:
                     stringFields = string.split()
                     if(len(stringFields)<2):
                         break
-                    if 'flash-range' in stringFields[0]:
+                    if b'flash-range' in stringFields[0]:
                         self.devLowAddr=int(stringFields[1],16)
                         self.devHighAddr = int(stringFields[2],16)-1
 
-                    if('GolfSerialLoader' in stringFields[1]):
+                    if(b'GolfSerialLoader' in stringFields[1]) or ((b'MSAT' in stringFields[0]) and (b'Serial' in stringFields[2])):
                        self.IsSerialFlash=True
                        print("Is serial flash")
-                    if('Version' in stringFields[0]):
+                    if(b'Version' in stringFields[0]):
                         #Ok, that's the last line
-                        print("Flash loader version " + stringFields[1])
+                        print("Flash loader version " + stringFields[1].decode())
                         break
-                    if(debug):
-                        sys.stdout.write(string)
+                    #if(debug):
+                        #sys.stdout.write(string)
                 sys.stdout.flush()
-                if(debug):
-                    print("No more input")
                 if(not self.IsSerialFlash):
                     self.gotDevice=False
                     raise serial.SerialException
@@ -142,7 +140,6 @@ class FlashLdr:
     def ReadPage(self,address,size):
 	#print("Reading page "+hex(address)+" of size "+hex(size))
         sys.stdout.flush()
-        #self.port.flushInput()
         self.port.flushOutput()
         command = 'R '+ hex(address)[2:]+'\n' #Don't want the 0x in front
         #print(command)
@@ -191,26 +188,23 @@ class FlashLdr:
     def StartExecution(self):
         #self.port.flushInput()
         self.port.flushOutput()
-        self.port.write('a')
+        self.port.write(b'a')
         return
     def __WaitAndSendCommand(self,command):
         #Waits for a prompt and then sends the command
-        retval=' '
-        while(retval != 'o'):
+        retval=b' '
+        while(retval.decode() != 'o'):
             retval = self.port.read(size=1) #Wait for \n
-            #if(len(retval)>0):
-                #sys.stdout.write('b')
-                #sys.stdout.write(retval[0])
         self.port.flushInput()
-        self.port.write(command)
+        self.port.write(command.encode())
 	#print(command)
         return
     def __WaitAndSendByte(self,byte):
         #Waits for a prompt and then sends the byte (which must
 	#be a bytearray.  This can probably be the same as SendCommand
 	
-        retval=' '
-        while(retval != '.'):
+        retval=b' '
+        while(retval.decode() != '.'):
             retval = self.port.read(size=1) #Wait for \n
             #if(len(retval)>0):
                 #sys.stdout.write('b')

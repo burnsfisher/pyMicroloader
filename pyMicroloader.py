@@ -42,13 +42,14 @@ for i in range(2,len(sys.argv)):
         tiUartLoader = True
         altosLoader = False
     else:
-        print("\npyMicroloader V2.2--Usage:\n")
+        print("\npyMicroloader V2.3--Usage:\n")
         print("  python pyMicroloader.py filename [--serial n] [--force]\n")
         print("     --serial is optional if the device has been flashed before;")
         print("       otherwise, you must specify it.  If you specified serial")
         print("       it must match the serial already flashed unless --force")
         print("       is added.")
         print("    --force overrides the check for serial number matching")
+        print("    --port  Explicitly specify the serial port the STM32 is connected to")
         print("    --wait keeps retrying until the loader device is available")
         print("    --usb uses the Altos USB flash loader protocol")
         print("    --uart uses the AMSAT serial flash loader protocol")

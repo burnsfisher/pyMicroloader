@@ -113,6 +113,7 @@ class Device(object):
         self.lowIndex = int(low/self.pageSize)
         self.memory = [MemoryPage(i,loader) for i in
                        range(low,high,self.pageSize)]
+        #print("Low="+str(low)+" High="+str(high))
     def _GetPageIndex(self,address):
         return (int(address/self.pageSize))-self.lowIndex
     
