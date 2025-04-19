@@ -32,146 +32,89 @@ import serial
 import serial.tools.list_ports
 import time
 
-
 class FlashLdr:
-    "A representation of the AMSAT STM32 UART Loader"
-    #
-    # Note:  You should be able to make different classes to represent different
-    # loaders with the same methods, and get this whole thing to work
-    #
-    def __init__(self,device=None,debug=False):
-        #First, for the Altos device on Linux, it will be one of these
+    "A representation of the AMSAT STM32 Serial Loader"
+
+    def __init__(self, device=None, debug=False):
         self.dev = ""
-        self.IsSerialFlash=False
-        output = bytearray([118]) # This is a bytearray of 1 with the letter 'v'
-        self.gotDevice=False
-        if(device==None):
-            if platform.system() == 'Windows':
-                baseDevice='COM'
-            else:
-                baseDevice='/dev/ttyUSB'
-            #
-            # It's not 100% clear if this works with Windows, although
-            # it should.  We might use the non-Grep version but in Linux
-            # we might have a zillion devices to iterate through.
+        self.IsSerialFlash = False
+        self.gotDevice = False
+        self.output = bytearray([118])  # Bytearray with letter 'v'
 
-            portInfos = serial.tools.list_ports.grep(baseDevice)
-            for pi in portInfos:
-                # This for is interating through the available serial devices
-                try:
-                    # Ok, we'll try to open the device names that we found
-                    # only stop if we get something or run out of devices.
-                    # If the creation fails, or if it works, but it does not
-                    # look like an Altos loader, SerialException is raised
-                    # and we try again
+        if device is None:
+            device = self._find_device()
 
-                    devName = pi[0]
-                    print("Trying "+devName)
-                    self.port=serial.Serial(devName,timeout=2.0,baudrate=57600)
-                    self.gotDevice=True
-                    self.port.flush()
-                    self.port.write(output)
-                    while True:
-                        # Ok, we have a device.  Read the prolog info from it
-                        # and parse to confirm that it is an AltosFlash and get
-                        # the memory range.
-                        #
-                        # This while is iterating through the lines that returned
-                        # in response to writing 'v' above.
+        self._initialize_device(device)
 
-                        string = self.port.readline()
-                        if((len(string)==0)):
-                            # We have read all there is.  We should have found it.
-                            break
-                        print(string)
-                        stringFields = string.split()
-                        if(len(stringFields)<2):
-                            break
-                        if b'flash-range' in stringFields[0]:
-                            self.devLowAddr=int(stringFields[1],16)
-                            self.devHighAddr = int(stringFields[2],16)-1
-
-                        if(b'GolfSerialLoader' in stringFields[1]) or ((b'MSAT' in stringFields[0]) and (b'Serial' in stringFields[2])):
-                           self.IsSerialFlash=True
-                           print("Is serial flash")
-                        if(b'Version' in stringFields[0]):
-                            #Ok, that's the last line
-                            print("Flash loader version " + stringFields[1].decode())
-                            break
-                        #if(debug):
-                            #sys.stdout.write(string)
-                    sys.stdout.flush()
-                    if(not self.IsSerialFlash):
-                        self.gotDevice=False
-                        raise serial.SerialException
-
-                except serial.SerialException:
-                    pass
-                except:
-                    traceback.print_exc()
-                if(self.IsSerialFlash):
-                    break;
+        if not self.gotDevice:
+            raise ValueError(f'No loader responding in port {self.dev}')
         else:
+            self.dev = device
+
+    def _find_device(self):
+        """Finds an appropriate serial device automatically."""
+        baseDevice = 'COM' if platform.system() == 'Windows' else '/dev/ttyUSB'
+        for pi in serial.tools.list_ports.grep(baseDevice):
+            devName = pi[0]
+            print(f"Trying {devName}")
             try:
-                print("Checking "+device)
-                if(os.path.islink(device)):
-                    print("Islink is true")
-                    devName = os.readlink(device)
-                    if("/dev" in device):
-                       devName ="/dev/"+devName
-                    print("Decoded path is "+ devName)
-                else:
-                    print("Islink was false")
-                    devName = device
-                self.port=serial.Serial(devName,timeout=2.0,baudrate=57600)
-                self.gotDevice=True
-                self.port.flush()
-                print("Opened port and about to send " + output.decode())
-                self.port.write(output)
-                while True:
-                    # Ok, we have a device.  Read the prolog info from it
-                    # and parse to confirm that it is an AltosFlash and get
-                    # the memory range.
-                    #
-                    # This while is iterating through the lines that returned
-                    # in response to writing 'v' above.
-                    print("Reading line now")
-                    string = self.port.readline()
-                    print("Read:")
-                    if((len(string)==0)):
-                        # We have read all there is.  We should have found it.
-                        print("Nothing read from serial this time")
-                        break
-                    print(string)
-                    stringFields = string.split()
-                    if(len(stringFields)<2):
-                        break
-                    if b'flash-range' in stringFields[0]:
-                        self.devLowAddr=int(stringFields[1],16)
-                        self.devHighAddr = int(stringFields[2],16)-1
-
-                    if(b'GolfSerialLoader' in stringFields[1]) or ((b'MSAT' in stringFields[0]) and (b'Serial' in stringFields[2])):
-                       self.IsSerialFlash=True
-                       print("Is serial flash")
-                    if(b'Version' in stringFields[0]):
-                        #Ok, that's the last line
-                        print("Flash loader version " + stringFields[1].decode())
-                        break
-                    #if(debug):
-                        #sys.stdout.write(string)
-                sys.stdout.flush()
-                if(not self.IsSerialFlash):
-                    self.gotDevice=False
-                    raise serial.SerialException
-
+                return devName if self._initialize_device(devName) else None
             except serial.SerialException:
                 pass
             except:
                 traceback.print_exc()
-        if(not self.gotDevice):
-            raise ValueError('No loader responding in port '+devName)
-        else:
-            self.dev = devName
+        return None
+
+    def _initialize_device(self, device):
+        """Attempts to open a device and check if it's the correct loader."""
+        try:
+            print(f"Checking {device}")
+            if platform.system() == 'Windows':
+                devName = device
+            else: #For Linux it might be a link.  Get the real name.
+                devName = os.readlink(device) if os.path.islink(device) else device
+                print(f"DevName after symlink conversion={devName}")
+            if "/dev" in device and not "/dev" in devName:
+                devName = f"/dev/{devName}"
+                print(f"Devname after adding dev is {devName}")
+            self.port = serial.Serial(devName, timeout=2.0, baudrate=57600)
+            self.gotDevice = True
+            self.port.flush()
+            self.port.write(self.output)
+
+            while True:
+                string = self.port.readline()
+                if not string:
+                    break
+                print(string.decode().strip())
+                stringFields = string.split()
+                if len(stringFields) < 2:
+                    break
+                if b'flash-range' in stringFields[0]:
+                    self.devLowAddr = int(stringFields[1], 16)
+                    self.devHighAddr = int(stringFields[2], 16) - 1
+
+                if (b'GolfSerialLoader' in stringFields[1]) or \
+                        ((b'MSAT' in stringFields[0]) and (b'Serial' in stringFields[2])):
+                    self.IsSerialFlash = True
+                    print("\nWe found a port with a serial flash loader:\n")
+                if b'Version' in stringFields[0]:
+                    print("Flash loader version " + stringFields[1].decode())
+                    break
+
+            sys.stdout.flush()
+            if not self.IsSerialFlash:
+                self.gotDevice = False
+                raise serial.SerialException
+            return True
+
+        except serial.SerialException:
+            return False
+        except:
+            traceback.print_exc()
+            return False
+
+
     def GetDevice(self):
         "Get the OS name of the device that communicates with the loader"
         return self.dev
