@@ -43,8 +43,8 @@ class FlashLdr:
 
         if device is None:
             device = self._find_device()
-
-        self._initialize_device(device)
+        else:
+            self._initialize_device(device)
 
         if not self.gotDevice:
             raise ValueError(f'No loader responding in port {self.dev}')
@@ -56,33 +56,30 @@ class FlashLdr:
         baseDevice = 'COM' if platform.system() == 'Windows' else '/dev/ttyUSB'
         for pi in serial.tools.list_ports.grep(baseDevice):
             devName = pi[0]
-            print(f"Trying {devName}")
-            try:
-                return devName if self._initialize_device(devName) else None
-            except serial.SerialException:
-                pass
-            except:
-                traceback.print_exc()
+            print(f"Checking {devName}")
+            if self._initialize_device(devName):
+                print(f"Loader found in {devName}")
+                return devName
         return None
 
     def _initialize_device(self, device):
         """Attempts to open a device and check if it's the correct loader."""
         try:
-            print(f"Checking {device}")
             if platform.system() == 'Windows':
                 devName = device
             else: #For Linux it might be a link.  Get the real name.
                 devName = os.readlink(device) if os.path.islink(device) else device
-                print(f"DevName after symlink conversion={devName}")
             if "/dev" in device and not "/dev" in devName:
                 devName = f"/dev/{devName}"
-                print(f"Devname after adding dev is {devName}")
+                print(f"Devname after symlink conversion: {devName}")
             self.port = serial.Serial(devName, timeout=2.0, baudrate=57600)
             self.gotDevice = True
             self.port.flush()
             self.port.write(self.output)
 
             while True:
+                #Here we are reading lines from the port we are testing and seeing if they match
+                # what a serial loader is supposed to say
                 string = self.port.readline()
                 if not string:
                     break
@@ -97,7 +94,8 @@ class FlashLdr:
                 if (b'GolfSerialLoader' in stringFields[1]) or \
                         ((b'MSAT' in stringFields[0]) and (b'Serial' in stringFields[2])):
                     self.IsSerialFlash = True
-                    print("\nWe found a port with a serial flash loader:\n")
+                    #Yes!  It is a serial loader.  The other ifs get the other required info
+                    print(f"\nPort {device} has a serial flash loader!\n")
                 if b'Version' in stringFields[0]:
                     print("Flash loader version " + stringFields[1].decode())
                     break
